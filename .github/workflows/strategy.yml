@@ -14,4 +14,4 @@ jobs:
         npm install
         STRATEGYNAME=$(echo github.event.pull_request.title | awk -F"strategy=|)" '{print $2}')
         if [ -n "$STRATEGYNAME" ]; then
-        npm run test --strategy=$STRATEGYNAME
+          npm run test --strategy=$STRATEGYNAME
