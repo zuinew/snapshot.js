@@ -1,0 +1,17 @@
+name: strategytest
+on:
+  pull_request:
+    types:
+      - edited
+jobs:
+  strategytest:
+    if: contains(github.event.pull_request.labels.*.name, 'strategy') && contains(github.event.pull_request.title, '(strategy=')
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: npm install and test strategy
+      run: |
+        npm install
+        STRATEGYNAME=$(echo github.event.pull_request.title | awk -F"strategy=|)" '{print $2}')
+        if [ -n "$STRATEGYNAME" ]; then
+        npm run test --strategy=$STRATEGYNAME
