@@ -20,7 +20,7 @@
           "title": "choice"
         },
         "metadata": {
-          "type": "object",
+          "type": "string",
           "title": "metadata"
         }
       },

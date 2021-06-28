@@ -3,6 +3,49 @@ import { signMessage } from './utils/web3';
 import hubs from './hubs.json';
 import { version } from './constants.json';
 
+export const domain = {
+  name: 'Snapshot',
+  version
+  // chainId: 1
+};
+
+export const getTypes = (type) => {
+  const otherTypes = {
+    vote: [
+      { name: 'proposal', type: 'string' },
+      { name: 'choice', type: 'uint32' },
+      { name: 'metadata', type: 'string' }
+    ],
+    proposal: [
+      { name: 'name', type: 'string' },
+      { name: 'body', type: 'string' },
+      { name: 'choices', type: 'string[]' },
+      { name: 'start', type: 'uint64' },
+      { name: 'end', type: 'uint64' },
+      { name: 'snapshot', type: 'uint64' },
+      { name: 'type', type: 'string' },
+      { name: 'metadata', type: 'string' }
+    ],
+    settings: [
+      { name: 'settings', type: 'string' }
+    ],
+    'delete-proposal': [
+      { name: 'proposal', type: 'string' }
+    ]
+  }
+  const types = {
+    Message: [
+      { name: 'version', type: 'string' },
+      { name: 'space', type: 'string' },
+      { name: 'timestamp', type: 'uint64' },
+      { name: 'type', type: 'string' },
+      { name: 'payload', type }
+    ]
+  }
+  types[type] = otherTypes[type]
+  return types;
+};
+
 export default class Client {
   readonly address: string;
 
@@ -48,18 +91,28 @@ export default class Client {
     type: string,
     payload: any
   ) {
-    const msg: any = {
-      address: account,
-      msg: JSON.stringify({
+    try {
+      const message = {
         version,
         timestamp: (Date.now() / 1e3).toFixed(),
         space,
         type,
         payload
-      })
-    };
-    msg.sig = await signMessage(web3, msg.msg, account);
-    return await this.send(msg);
+      }
+
+      const msg: any = {
+        address: account,
+        msg: JSON.stringify(message)
+      };
+
+      const signer = web3.getSigner();
+      msg.sig = await signer._signTypedData(domain, getTypes(type), message);
+      return await this.send(msg);
+
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
   }
 
   async vote(
@@ -71,7 +124,7 @@ export default class Client {
     return this.broadcast(web3, address, space, 'vote', {
       proposal,
       choice,
-      metadata
+      metadata: JSON.stringify(metadata)
     });
   }
 
@@ -98,7 +151,7 @@ export default class Client {
       end,
       snapshot,
       type,
-      metadata
+      metadata: JSON.stringify(metadata)
     });
   }
 
